@@ -2,48 +2,68 @@
 
 use PHPUnit\Framework\TestCase;
 
-final class QueueTest extends TestCase
+class QueueTest extends TestCase
 {
-  protected static $queue;
 
-  protected function setUp(): void
-  {
-    static::$queue->clear();
-  }
+    protected $queue;
 
-  public static function setUpBeforeClass(): void
-  {
-    static::$queue = new Queue;
-  }
+    protected function setUp(): void
+    {
+        $this->queue = new Queue;
+    }
 
-  public static function tearDownAfterClass(): void
-  {
-    static::$queue = null;
-  }
+    public function testNewQueueIsEmpty()
+    {
+        $this->assertEquals(0, $this->queue->getCount());
+    }
 
-  public function testNewQueueIsEmpty()
-  {
-    $this->assertEquals(0, static::$queue->getCount());
-  }
+    public function testAnItemIsAddedToTheQueue()
+    {
+        $this->queue->push('green');
+        
+        $this->assertEquals(1, $this->queue->getCount());
+    }
 
-  public function testAnItemIsAddedToTheQueue()
-  {
-    static::$queue->push("green");
-    $this->assertEquals(1, static::$queue->getCount());
-  }
+    public function testAnItemIsRemovedFromTheQueue()
+    {
+        $this->queue->push('green');
+        $item = $this->queue->pop();
+        
+        $this->assertEquals(0, $this->queue->getCount());
+        $this->assertEquals('green', $item);
+    }
 
-  public function testAnItemIsRemovedFromTheQueue()
-  {
-    static::$queue->push("green");
-    $item = static::$queue->pop();
-    $this->assertEquals(0, static::$queue->getCount());
-    $this->assertEquals("green", $item);
-  }
+    public function testAnItemIsRemovedFromTheFrontOfTheQueue()
+    {
+        $this->queue->push('first');
+        $this->queue->push('second');
 
-  public function testAnItemIsRemovedFromTheFrontOfQueue()
-  {
-    static::$queue->push("first");
-    static::$queue->push("second");
-    $this->assertEquals("first", static::$queue->pop());
-  }
+        $this->assertEquals('first', $this->queue->pop());
+    }
+
+    public function testMaxNumberOfItemsCanBeAdded()
+    {
+        for ($i = 0; $i < Queue::MAX_ITEMS; $i++) {
+
+            $this->queue->push($i);
+            
+        }        
+        
+        $this->assertEquals(Queue::MAX_ITEMS, $this->queue->getCount());        
+    }
+    
+    public function testExceptionThrownWhenAddingAnItemToAFullQueue()
+    {
+        for ($i = 0; $i < Queue::MAX_ITEMS; $i++) {
+
+            $this->queue->push($i);
+            
+        }     
+
+        $this->expectException(QueueException::class);
+        
+        $this->expectExceptionMessage("Queue is full");        
+        
+        $this->queue->push("wafer thin mint");           
+    }    
 }
