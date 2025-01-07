@@ -2,6 +2,11 @@
 
 use PHPUnit\Framework\TestCase;
 
+interface PaymentGateway
+{
+    public function charge(int $amount): bool;
+}
+
 class OrderTest extends TestCase
 {
     public function testOrderIsProcessed()
