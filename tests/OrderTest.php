@@ -2,9 +2,8 @@
 
 use PHPUnit\Framework\TestCase;
 
-interface PaymentGateway
-{
-    public function charge(int $amount): bool;
+class PaymentGateway {
+    public function charge($amount) {}
 }
 
 class OrderTest extends TestCase
@@ -13,36 +12,39 @@ class OrderTest extends TestCase
         Mockery::close();
     }
 
-    public function testOrderIsProcessed()
+    public function testOrderIsProcessedUsingAMock()
     {
-        $gateway = $this->getMockBuilder('PaymentGateway')
-                        ->onlyMethods(['charge'])
-                        ->getMock();
+        $order = new Order(3, 1.99);
         
-        $gateway->expects($this->once())
-                ->method('charge')
-                ->with($this->equalTo(200))
-                ->willReturn(true);
-        
-        $order = new Order($gateway);
-
-        $order->amount = 200;
-        
-        $this->assertTrue($order->process());
-    }
-
-    public function testOrderIsProcessedUsingMockery()
-    {
-        $gateway = Mockery::mock('PaymentGateway');
-        $gateway->shouldReceive('charge')
-                ->once()
-                ->with(200)
-                ->andReturn(true);
+        $this->assertEquals(5.97, $order->amount);
     
-        $order = new Order($gateway);
-
-        $order->amount = 200;
+        /**
+         * @var \Mockery\LegacyMockInterface&\Mockery\MockInterface|PaymentGateway $gateway_mock
+         */
+        $gateway_mock = Mockery::mock('PaymentGateway');
         
-        $this->assertTrue($order->process());
+        $gateway_mock->shouldReceive('charge')
+                     ->once()
+                     ->with(5.97);
+        
+        $order->process($gateway_mock);
+    }
+    
+    public function testOrderIsProcessedUsingASpy()
+    {
+        $order = new Order(3, 1.99);
+        
+        $this->assertEquals(5.97, $order->amount);
+    
+        /**
+         * @var \Mockery\LegacyMockInterface&\Mockery\MockInterface|PaymentGateway $gateway_spy
+         */
+        $gateway_spy = Mockery::spy('PaymentGateway');
+        
+        $order->process($gateway_spy);
+        
+        $gateway_spy->shouldHaveReceived('charge')  // shouldReceiveではなくshouldHaveReceivedを使用
+                    ->times(1)
+                    ->with(5.97);
     }
 }
